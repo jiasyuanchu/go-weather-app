@@ -43,10 +43,10 @@
 <link rel="stylesheet" href="/static/css/style.css">
 
 <body>
-  <h1>天氣查詢應用</h1>
+  <h1>Check the Weather</h1>
   <div>
     <input type="text" id="cityInput" placeholder="輸入城市名稱">
-    <button onclick="getWeather()">查詢天氣</button>
+    <button onclick="getWeather()">Search Weather</button>
   </div>
   <div id="weatherContainer" class="weather-container">
     <h2 id="cityName"></h2>
@@ -61,14 +61,14 @@
     function getWeather() {
       const city = document.getElementById('cityInput').value;
       if (!city) {
-        alert('請輸入城市名稱');
+        alert('Please enter a city name');
         return;
       }
 
       fetch(`/weather?city=${encodeURIComponent(city)}`)
         .then(response => {
           if (!response.ok) {
-            throw new Error('查詢失敗');
+            throw new Error('Failed to fetch weather data');
           }
           return response.json();
         })
@@ -88,7 +88,7 @@
           document.getElementById('weatherContainer').style.display = 'block';
         })
         .catch(error => {
-          alert('錯誤: ' + error.message);
+          alert('Error: ' + error.message);
         });
     }
   </script>
