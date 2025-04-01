@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -31,11 +30,34 @@ type WeatherResponse struct {
 	Name string `json:"name"`
 }
 
-func main() {
-	// Load environment variables from .env file
+func loadEnv() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: No .env file found")
 	}
+}
+
+func fetchWeatherData(city, apiKey string) (*WeatherResponse, error) {
+	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric", city, apiKey)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to weather API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("weather API returned status: %d", resp.StatusCode)
+	}
+
+	var weatherData WeatherResponse
+	if err := json.NewDecoder(resp.Body).Decode(&weatherData); err != nil {
+		return nil, fmt.Errorf("failed to parse weather API response: %w", err)
+	}
+
+	return &weatherData, nil
+}
+
+func main() {
+	loadEnv()
 
 	apiKey := os.Getenv("API_KEY")
 	if apiKey == "" {
@@ -43,47 +65,24 @@ func main() {
 	}
 
 	r := gin.Default()
-
 	r.Static("/static", "./static")
-
 	r.LoadHTMLGlob("templates/*")
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title": "天氣查詢應用",
-		})
+		c.HTML(http.StatusOK, "index.html", gin.H{"title": "Weather App"})
 	})
 
 	r.GET("/weather", func(c *gin.Context) {
 		city := c.Query("city")
 		if city == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "城市參數缺失"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing city parameter"})
 			return
 		}
 
-		// call the OpenWeatherMap API
-		url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric", city, apiKey)
-		resp, err := http.Get(url)
+		weatherData, err := fetchWeatherData(city, apiKey)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "無法連接到天氣API"})
-			return
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			c.JSON(resp.StatusCode, gin.H{"error": "天氣API返回錯誤"})
-			return
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "讀取API響應失敗"})
-			return
-		}
-
-		var weatherData WeatherResponse
-		if err := json.Unmarshal(body, &weatherData); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "解析API響應失敗"})
+			log.Println("Error fetching weather data:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve weather data"})
 			return
 		}
 
@@ -94,5 +93,6 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	log.Printf("Server running on port %s", port)
 	r.Run(":" + port)
 }
