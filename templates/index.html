@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -39,22 +39,22 @@
       background-color: #45a049;
     }
   </style>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<link rel="stylesheet" href="/static/css/style.css">
 
 <body>
   <h1>Check the Weather</h1>
   <div>
-    <input type="text" id="cityInput" placeholder="輸入城市名稱">
+    <input type="text" id="cityInput" placeholder="Enter city name">
     <button onclick="getWeather()">Search Weather</button>
   </div>
   <div id="weatherContainer" class="weather-container">
     <h2 id="cityName"></h2>
     <p id="weatherDescription"></p>
-    <p>溫度: <span id="temperature"></span>°C</p>
-    <p>體感溫度: <span id="feelsLike"></span>°C</p>
-    <p>濕度: <span id="humidity"></span>%</p>
-    <p>風速: <span id="windSpeed"></span> m/s</p>
+    <p>Temperature: <span id="temperature"></span>°C</p>
+    <p>Feels like: <span id="feelsLike"></span>°C</p>
+    <p>Humidity: <span id="humidity"></span>%</p>
+    <p>Wind speed: <span id="windSpeed"></span> m/s</p>
   </div>
 
   <script>
