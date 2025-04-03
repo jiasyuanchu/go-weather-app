@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// WeatherResponse defines the structure for the OpenWeatherMap API response
 type WeatherResponse struct {
 	Weather []struct {
 		Main        string `json:"main"`
@@ -30,14 +31,17 @@ type WeatherResponse struct {
 	Name string `json:"name"`
 }
 
+// loadEnv loads environment variables from .env file
 func loadEnv() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: No .env file found")
 	}
 }
 
+// fetchWeatherData retrieves weather data from OpenWeatherMap API
 func fetchWeatherData(city, apiKey string) (*WeatherResponse, error) {
 	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric", city, apiKey)
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to weather API: %w", err)
@@ -56,15 +60,17 @@ func fetchWeatherData(city, apiKey string) (*WeatherResponse, error) {
 	return &weatherData, nil
 }
 
-func main() {
-	loadEnv()
-
-	apiKey := os.Getenv("API_KEY")
-	if apiKey == "" {
-		log.Fatal("API_KEY not set in environment")
+// getPort retrieves the port from environment variables or uses default
+func getPort() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
+	return port
+}
 
-	r := gin.Default()
+// setupRoutes configures the API routes
+func setupRoutes(r *gin.Engine, apiKey string) {
 	r.Static("/static", "./static")
 	r.LoadHTMLGlob("templates/*")
 
@@ -88,11 +94,20 @@ func main() {
 
 		c.JSON(http.StatusOK, weatherData)
 	})
+}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+func main() {
+	loadEnv()
+
+	apiKey := os.Getenv("API_KEY")
+	if apiKey == "" {
+		log.Fatal("API_KEY not set in environment")
 	}
+
+	r := gin.Default()
+	setupRoutes(r, apiKey)
+
+	port := getPort()
 	log.Printf("Server running on port %s", port)
 	r.Run(":" + port)
 }
